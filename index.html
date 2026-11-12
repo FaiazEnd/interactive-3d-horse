@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Interactive 3D Horse Showcase rendered with Three.js, PBR materials, dynamic lighting presets, and animations." />
+    <title>Interactive 3D Horse Showcase | Three.js</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/interactive-3d-horse/assets/index-nz9imK8E.js"></script>
+    <link rel="stylesheet" crossorigin href="/interactive-3d-horse/assets/index-D2SGqGpk.css">
+  </head>
+  <body>
+    <!-- 3D Canvas -->
+    <canvas id="webgl-canvas" aria-label="Interactive 3D Horse Model"></canvas>
+
+    <!-- Top Left Title Badge -->
+    <header class="badge-card" aria-label="Showcase Header">
+      <div class="badge-pill">3D SHOWCASE</div>
+      <h1 class="badge-title">Equine Stallion</h1>
+      <p class="badge-subtitle">PBR Realism • Skeletal Motion • Studio HDR</p>
+    </header>
+
+    <!-- Interactive Toast / Hint -->
+    <footer id="hud-hint" class="hud-bar" role="status" aria-live="polite">
+      <div class="hint-content">
+        <span class="hint-icon">✦</span>
+        <span class="hint-text"><strong>Drag</strong> to orbit • <strong>Scroll</strong> to zoom • <strong>Click horse</strong> to interact</span>
+      </div>
+      <div id="fps-counter" class="fps-pill" aria-label="Performance">60 FPS</div>
+    </footer>
+
+    <!-- Loading Screen -->
+    <div id="loading-overlay" class="loading-overlay" aria-busy="true">
+      <div class="spinner"></div>
+      <p class="loading-text">Preparing 3D Horse & Shaders...</p>
+    </div>
+
+  </body>
+</html>

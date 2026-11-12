@@ -18,21 +18,21 @@ export class HorseModel {
     this.isPaused = false;
     this.petReactionTimer = 0;
 
-    // Coat presets
+    // Photorealistic Coat Presets (Rich, vibrant PBR values)
     this.coatPresets = {
-      chestnut: { name: 'Chestnut', color: '#793816', roughness: 0.55 },
-      black: { name: 'Black Stallion', color: '#161616', roughness: 0.42 },
-      palomino: { name: 'Palomino White', color: '#efe6d5', roughness: 0.50 },
-      bay: { name: 'Mahogany Bay', color: '#4e2716', roughness: 0.52 },
-      gray: { name: 'Dapple Gray', color: '#7c8084', roughness: 0.56 }
+      chestnut: { name: 'Chestnut Stallion', color: '#8a3c1b', roughness: 0.36 },
+      black: { name: 'Midnight Stallion', color: '#1c1e24', roughness: 0.26 },
+      palomino: { name: 'Golden Palomino', color: '#e8c992', roughness: 0.32 },
+      bay: { name: 'Mahogany Bay', color: '#542611', roughness: 0.34 },
+      gray: { name: 'Dapple Slate Gray', color: '#9aa0a6', roughness: 0.40 }
     };
     this.currentCoat = 'chestnut';
-    this.customColor = '#793816';
-    this.currentRoughness = 0.55;
+    this.customColor = '#8a3c1b';
+    this.currentRoughness = 0.36;
     this.isWireframe = false;
   }
 
-  // Create high-detail micro-fur procedural bump texture
+  // Create subtle procedural micro-fur bump texture for specular highlights
   createFurTexture() {
     if (typeof document === 'undefined') return null;
 
@@ -49,7 +49,7 @@ export class HorseModel {
     const data = imgData.data;
 
     for (let i = 0; i < data.length; i += 4) {
-      const noise = (Math.random() - 0.5) * 45;
+      const noise = (Math.random() - 0.5) * 35;
       const val = Math.min(255, Math.max(0, 128 + noise));
       data[i] = val;     // R
       data[i + 1] = val; // G
@@ -62,7 +62,7 @@ export class HorseModel {
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(12, 12);
+    texture.repeat.set(8, 8);
     return texture;
   }
 
@@ -86,26 +86,33 @@ export class HorseModel {
 
       this.mesh = horseMesh;
 
-      // Realistic PBR material with fur micro-bump & morph targets
+      // CRITICAL: Compute smooth vertex normals so PBR lighting calculates properly!
+      this.mesh.geometry.computeVertexNormals();
+
+      // Realistic MeshPhysicalMaterial with Sheen for lifelike fur reflections
       const furBumpMap = this.createFurTexture();
 
-      this.material = new THREE.MeshStandardMaterial({
+      this.material = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(this.coatPresets[this.currentCoat].color),
         roughness: this.currentRoughness,
-        metalness: 0.08,
+        metalness: 0.05,
+        clearcoat: 0.18,
+        clearcoatRoughness: 0.25,
+        sheen: 0.75,
+        sheenColor: new THREE.Color(0xffffff),
+        sheenRoughness: 0.35,
         bumpMap: furBumpMap,
-        bumpScale: 0.002,
-        morphTargets: true
+        bumpScale: 0.0015
       });
 
       this.mesh.material = this.material;
       this.mesh.castShadow = true;
       this.mesh.receiveShadow = true;
 
-      // Scale and position horse properly on pedestal
-      this.mesh.scale.set(0.009, 0.009, 0.009);
-      this.mesh.position.set(0, 0, 0);
-      this.mesh.rotation.y = Math.PI / 4; // Hero 3/4 pose
+      // Scale up to prominent size (1.3x) and position centered over the plinth
+      this.mesh.scale.set(0.013, 0.013, 0.013);
+      this.mesh.position.set(0, 0, 0.35); // Center mass over pedestal origin
+      this.mesh.rotation.y = -Math.PI / 3.2; // Heroic 3/4 galloping profile
 
       this.scene.add(this.mesh);
 
@@ -114,7 +121,7 @@ export class HorseModel {
       if (gltf.animations && gltf.animations.length > 0) {
         this.clip = gltf.animations[0];
         this.action = this.mixer.clipAction(this.clip);
-        this.action.setDuration(1.2);
+        this.action.setDuration(1.1);
         this.action.play();
         this.updateGaitSpeed();
       }
@@ -156,7 +163,7 @@ export class HorseModel {
 
     let petBoost = 1.0;
     if (this.petReactionTimer > 0) {
-      petBoost = 1.75;
+      petBoost = 1.8;
     }
 
     this.action.timeScale = gaitFactor * this.playbackSpeed * petBoost;
@@ -195,6 +202,14 @@ export class HorseModel {
 
     if (this.material) {
       this.material.color.copy(color);
+      // Adjust sheen color to harmonize with coat
+      if (this.currentCoat === 'black') {
+        this.material.sheenColor.setHex(0x94a3b8);
+      } else if (this.currentCoat === 'palomino') {
+        this.material.sheenColor.setHex(0xfffbeb);
+      } else {
+        this.material.sheenColor.setHex(0xffffff);
+      }
     }
     if (this.proceduralFallback) {
       this.proceduralFallback.setCoat(colorHex);
@@ -239,7 +254,7 @@ export class HorseModel {
       this.proceduralFallback.update(delta);
     }
 
-    // Pet reaction dynamic spring
+    // Pet reaction dynamic spring rearing motion
     if (this.petReactionTimer > 0) {
       this.petReactionTimer -= delta;
       if (this.petReactionTimer <= 0) {
@@ -249,9 +264,8 @@ export class HorseModel {
 
       if (this.mesh) {
         const progress = this.petReactionTimer / 1.0;
-        // Spring rear-up angle
-        this.mesh.rotation.x = -Math.sin(progress * Math.PI) * 0.18;
-        this.mesh.position.y = Math.sin(progress * Math.PI) * 0.22;
+        this.mesh.rotation.x = -Math.sin(progress * Math.PI) * 0.22;
+        this.mesh.position.y = Math.sin(progress * Math.PI) * 0.28;
       }
     } else if (this.mesh) {
       this.mesh.rotation.x = 0;

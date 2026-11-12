@@ -28,13 +28,13 @@ export class ControlsUI {
 
       // 2. Appearance & Coat
       coatPreset: 'chestnut',
-      coatColor: '#793816',
-      roughness: 0.55,
+      coatColor: '#8a3c1b',
+      roughness: 0.36,
       wireframe: false,
 
       // 3. Lighting & Environment
       environmentPreset: 'studio',
-      sunIntensity: 1.8,
+      sunIntensity: 2.8,
       shadows: true,
 
       // 4. Camera

@@ -18,17 +18,17 @@ export class HorseModel {
     this.isPaused = false;
     this.petReactionTimer = 0;
 
-    // Photorealistic Coat Presets (Rich, vibrant PBR values)
+    // Coat Presets tuned for vertex-color blending (preserves dark hooves, mane, and muzzle anatomy)
     this.coatPresets = {
-      chestnut: { name: 'Chestnut Stallion', color: '#8a3c1b', roughness: 0.36 },
-      black: { name: 'Midnight Stallion', color: '#1c1e24', roughness: 0.26 },
-      palomino: { name: 'Golden Palomino', color: '#e8c992', roughness: 0.32 },
-      bay: { name: 'Mahogany Bay', color: '#542611', roughness: 0.34 },
-      gray: { name: 'Dapple Slate Gray', color: '#9aa0a6', roughness: 0.40 }
+      chestnut: { name: 'Chestnut Stallion', color: '#ffffff', roughness: 0.34 },
+      black: { name: 'Midnight Stallion', color: '#383d46', roughness: 0.25 },
+      palomino: { name: 'Golden Palomino', color: '#fef3c7', roughness: 0.30 },
+      bay: { name: 'Mahogany Bay', color: '#d97706', roughness: 0.32 },
+      gray: { name: 'Dapple Slate Gray', color: '#cbd5e1', roughness: 0.38 }
     };
     this.currentCoat = 'chestnut';
-    this.customColor = '#8a3c1b';
-    this.currentRoughness = 0.36;
+    this.customColor = '#ffffff';
+    this.currentRoughness = 0.34;
     this.isWireframe = false;
   }
 
@@ -86,33 +86,50 @@ export class HorseModel {
 
       this.mesh = horseMesh;
 
-      // CRITICAL: Compute smooth vertex normals so PBR lighting calculates properly!
+      // 1. Compute smooth vertex normals for PBR lighting calculations
       this.mesh.geometry.computeVertexNormals();
 
-      // Realistic MeshPhysicalMaterial with Sheen for lifelike fur reflections
+      // 2. Normalize painted vertex colors (preserves dark hooves, dark mane, lighter muzzle)
+      const colAttr = this.mesh.geometry.attributes.color;
+      if (colAttr) {
+        let maxVal = 0;
+        for (let i = 0; i < colAttr.array.length; i++) {
+          if (colAttr.array[i] > maxVal) maxVal = colAttr.array[i];
+        }
+        if (maxVal > 0) {
+          const factor = 1.0 / maxVal;
+          for (let i = 0; i < colAttr.array.length; i++) {
+            colAttr.array[i] *= factor;
+          }
+          colAttr.needsUpdate = true;
+        }
+      }
+
+      // 3. Realistic MeshPhysicalMaterial with Sheen & Vertex Colors
       const furBumpMap = this.createFurTexture();
 
       this.material = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(this.coatPresets[this.currentCoat].color),
+        vertexColors: true, // Blends coat color with anatomical details (hooves, mane, eyes)
         roughness: this.currentRoughness,
         metalness: 0.05,
-        clearcoat: 0.18,
+        clearcoat: 0.2,
         clearcoatRoughness: 0.25,
-        sheen: 0.75,
+        sheen: 0.8,
         sheenColor: new THREE.Color(0xffffff),
         sheenRoughness: 0.35,
         bumpMap: furBumpMap,
-        bumpScale: 0.0015
+        bumpScale: 0.0012
       });
 
       this.mesh.material = this.material;
       this.mesh.castShadow = true;
       this.mesh.receiveShadow = true;
 
-      // Scale up to prominent size (1.3x) and position centered over the plinth
-      this.mesh.scale.set(0.013, 0.013, 0.013);
+      // Scale up to prominent size and center mass over pedestal
+      this.mesh.scale.set(0.0135, 0.0135, 0.0135);
       this.mesh.position.set(0, 0, 0.35); // Center mass over pedestal origin
-      this.mesh.rotation.y = -Math.PI / 3.2; // Heroic 3/4 galloping profile
+      this.mesh.rotation.y = -Math.PI / 3.2; // Heroic 3/4 profile
 
       this.scene.add(this.mesh);
 
